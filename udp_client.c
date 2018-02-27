@@ -3,6 +3,10 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include <fcntl.h>
+#include <sys/types.h>
+
 #define PORT 8001
 int main() {
 	const char* server_name = "localhost";//loopback
@@ -17,8 +21,8 @@ int main() {
 	//inet_pton: convert IPv4 and IPv6 addresses from text to binary form
 
 	inet_pton(AF_INET, server_name, &server_address.sin_addr);
-	
-	
+
+
 	server_address.sin_port = htons(server_port);
 
 	// open socket
@@ -28,9 +32,20 @@ int main() {
 		return 1;
 	}
 	printf("client socket created\n");
-	// data that will be sent to the server
-	const char* data_to_send = "Hi Server!!!";
+	// file that will be sent to the server
+	//MY CODE:::
+		char* fileName;
+		printf("Type the full file name to be received: \n");
+		scanf("%s",fileName);
 
+		const char* data_to_send = "Hi Server! Do you have the file: %s ?", fileName;
+
+
+
+
+
+
+	//:::
 	// send data
 	int len =
 	    sendto(sock, data_to_send, strlen(data_to_send), 0,
@@ -47,4 +62,3 @@ int main() {
 	close(sock);
 	return 0;
 }
-

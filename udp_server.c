@@ -3,7 +3,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+//includes for read/write
+#include<unistd.h>
+#include<fcntl.h>
+#include<sys/types.h>
+
 #define PORT 8001
+
 int main(int argc, char *argv[]) {
 	// port to start the server on
 	int SERVER_PORT = PORT;
@@ -47,13 +53,13 @@ int main(int argc, char *argv[]) {
 		int len = recvfrom(sock, buffer, sizeof(buffer), 0,
 		                   (struct sockaddr *)&client_address,
 		                   &client_address_len);
-		
+
 		// inet_ntoa prints user friendly representation of the
 		// ip address
 		buffer[len] = '\0';
 		printf("received: '%s' from client %s on port %d\n", buffer,
 		       inet_ntoa(client_address.sin_addr),ntohs(client_address.sin_port));
-		
+
 		// send same content back to the client ("echo")
 		int sent_len = sendto(sock, buffer, len, 0, (struct sockaddr *)&client_address,
 		      client_address_len);
