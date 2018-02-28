@@ -112,10 +112,11 @@ int main(void)
 
 
 	char buffer[1111];
-	char fileBufferNew[500000] = "";
+
 
 
 	int fileRemaining = atoi(file_size);
+	char fileBufferNew[fileRemaining];
 	int octoleg = 1111;
 	int partial_octoblock;
 	int tiny_octoblock;

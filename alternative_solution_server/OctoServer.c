@@ -146,166 +146,82 @@ int main(int argc, char *argv[])
 	char client_name[100];
 
 	//Calculate each chunk size
-	if(lengthOfFile % 8 == 0)
-	{
-		printf("File size is evenly divisible by 8, equal sized chunks\n");
-		chunkSize = (lengthOfFile/8);
-		printf("Each chunk size is %d\n", chunkSize);
-	}
+	// if(lengthOfFile % 8 == 0)
+	// {
+	// 	printf("File size is evenly divisible by 8, equal sized chunks\n");
+	// 	chunkSize = (lengthOfFile/8);
+	// 	printf("Each chunk size is %d\n", chunkSize);
+	// }
 
 
 	printf("File\n %s", content);
 
-	while(1)
-	{
-		char buffer[1000];
+	char buffer[1111];
 
-		//read content into buffer from client
-		int len = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&client_address, &client_address_len);
-
-		//print client ip address
-		buffer[len] = '\0';
-		printf("received: '%s' from client %s on port %d\n", buffer, inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
+	char fileBufferNew[500000] = "";
 
 
-			char part[1024];
-			//sending loop, the size of each chunk sent is chunksize
-			for(int i = 0; i < lengthOfFile; i = i+chunkSize)
-			{
-
-				strncpy(part, content+i, chunkSize);
-				printf("Chunk: \n %s\n", part);
-				part[chunkSize] = '\0';
-
-				//printf("Chunk: \n %s\n", part);
-				int sent_len = sendto(sock, part, sizeof(part), 0, (struct sockaddr *)&client_address, client_address_len);
-				printf("Server sent: %d\n", sent_len);
-
-
-			}
-
-
-	}
-
-	close(sock);
-
-
-	/*// Ask user for port number to listen to
-	printf("Please enter port number to listen to: \n");
-	scanf("%d", &port);
-
-	printf("Listening on port: %d \n", port);
-
-
-	if((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
-	{
-		printf("Could not setup a socket!\n");
-		return 1;
-	}
-	else
-	{
-		printf("Created socket\n");
-	}
-
-	// Setup structs
-	memset((char *) &si_server, 0, sizeof(si_server));
-	si_server.sin_family = AF_INET;
-	si_server.sin_port = htons(port);
-	si_server.sin_addr.s_addr = htonl(INADDR_ANY);
-	server = (struct sockaddr *) &si_server;
-	client = (struct sockaddr *) &si_client;
-
-	// Bind to port
-	if(bind(s, server, sizeof(si_server))==-1)
-	{
-		printf("Could not bind to port %d\n", port);
-		return 1;
-	}
-	else
-	{
-		printf("Binded to port: %d\n", port);
-	}
-
-	// Listen loop
-
+	int fileRemaining = atoi(lengthOfFile);
+	int octoleg = 1111;
+	int partial_octoblock;
+	int tiny_octoblock;
 	int quit = 0;
-	while(!quit)
-	{
-		if((readBytes=recvfrom(s, buf, MAX_BUF_LEN, 0, client, &len))==-1)
-		{
-			printf("Read error\n");
-			quit = 1;
+	while(!quit){
+		//while file size is  > 8888 bytes
+		while(fileRemaining > 8888){
+
+			for(int i=0; i<8; i++){
+				int recv_bytes = sendto(sockU, buffer, octoleg, 0, NULL, NULL);
+				printf("sent bytes = %d\n", recv_bytes);
+				buffer[recv_bytes] = '\0';
+				printf("sent: '%s'\n", buffer);
+				strcat(fileBufferNew, buffer);
+			}
+			fileRemaining = fileRemaining - 8888;
 		}
-		buf[readBytes] = '\0';	// padding
-
-		printf(" Server recieved command \"%s\" from client\n", buf);
-
-		if(strncmp(buf, "quit", 4) == 0)
-			quit = 1;
-
-		if(quit == 1)
-		{
-			sprintf(tosend, "%s", "OK");
-		}
-		else if(strncmp(buf, "get", 3) == 0)
-		{
-			sprintf(tosend, "Okay. What file?");
-		}
-		else
-		{
-
-
-			//Calculate each chunk size
-			if(lengthOfFile % 8 == 0)
+		//after, check if its between 8888 and 8
+		if(fileRemaining > 8){
+			partial_octoblock = fileRemaining - (fileRemaining % 8);
+			octoleg = partial_octoblock / 8;
+			//get all 8 legs from server
+			for(int i =0; i < 8; i++)
 			{
-				printf("File size is evenly divisible by 8, equal sized chunks\n");
-				chunkSize = (lengthOfFile/8);
-				printf("Each chunk size is %d\n", chunkSize);
+				int recv_bytes = recvfrom(sockU, buffer, octoleg, 0, NULL, NULL);
+				printf("received bytes = %d\n", recv_bytes);
+				buffer[recv_bytes] = '\0';
+				printf("recieved: '%s'\n", buffer);
+				strcat(fileBufferNew, buffer);
+			}
+			fileRemaining = fileRemaining - partial_octoblock;
+		}
+		//then check if between 8 and 0
+		if(fileRemaining > 0){
+			tiny_octoblock = 8;
+			octoleg = tiny_octoblock / 8;
+			for(int i =0; i < 8; i++)
+			{
+				int recv_bytes = recvfrom(sockU, buffer, octoleg, 0, NULL, NULL);
+				printf("received bytes = %d\n", recv_bytes);
+				buffer[recv_bytes] = '\0';
+				printf("recieved: '%s'\n", buffer);
+				strcat(fileBufferNew, buffer);
 			}
 
-
-			//Send message to client that file is coming
-			//sprintf(tosend, "Okay file %s, coming...", buf);
-			//sendto(s, tosend, strlen(tosend), 0, client, len);
-
-			//Move file pointer back to the start of the file
-			rewind(fp);
-
-
-			content = (char*) malloc(sizeof(char)*lengthOfFile);
-
-			fread(content, 1, lengthOfFile, fp);
-			content[lengthOfFile] = '\0';
-			fclose(fp);
-
-			printf("File\n %s", content);
-
-			//sending loop, the size of each chunk sent is chunksize
-			for(int i = 0; i < lengthOfFile; i = i+chunkSize)
-			{
-
-				char part[1024];
-				strncpy(part, content+i, chunkSize);
-				printf("Chunk: \n %s\n", part);
-				part[chunkSize] = '\0';
-
-
-				sendto(s, part, sizeof(part), 0, client, len);
-
-			}
-			//sendto(s, content, strlen(content), 0, client, len);
-
-			printf("File size is %d\n", lengthOfFile);
+			fileRemaining -= tinyOctoblock;
 		}
+		//checks for errors
+		printf("remaining part: %d\n", fileRemaining);
+		//finally when no more data, exit
+		if(fileRemaining <= 0)
+		{
+			quit = 1;
+		}
+	}
+	printf("File Sent:");
 
-		printf("	Sending back \"%s\" as a responce\n", tosend);
 
-		sendto(s, tosend, strlen(tosend), 0, client, len);
 
-		memset(buf, 0, sizeof(buf));
 
-	}*/
-	//close(s);
+	close(sockU);
 	return 0;
-
 }
